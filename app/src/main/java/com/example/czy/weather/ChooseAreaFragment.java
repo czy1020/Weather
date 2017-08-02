@@ -1,6 +1,7 @@
 package com.example.czy.weather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 import com.example.czy.weather.db.City;
 import com.example.czy.weather.db.County;
 import com.example.czy.weather.db.Province;
+import com.example.czy.weather.util.Net;
 import com.example.czy.weather.util.NetRequestCallBack;
 import com.example.czy.weather.util.NetRequestInstance;
 import com.example.czy.weather.util.Utility;
@@ -88,6 +90,12 @@ public class ChooseAreaFragment extends Fragment {
                 } else if (currentLevel == LEVEL_CITY) {
                     selectedCity = cities.get(i);
                     queryCounties();
+                } else if (currentLevel == LEVEL_COUNTY) {
+                    String weatherId = counties.get(i).getWeatherId();
+                    Intent intent = new Intent(getContext(), WeatherActivity.class);
+                    intent.putExtra("weather_id", weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
                 }
             }
         });
@@ -121,7 +129,7 @@ public class ChooseAreaFragment extends Fragment {
             listView.setSelection(0);
             currentLevel = LEVEL_PROVINCE;
         } else {
-            String address = "http://guolin.tech/api/china";
+            String address = Net.CITY_BASE_URL;
             queryFromServer(address, "province");
         }
     }
@@ -132,7 +140,7 @@ public class ChooseAreaFragment extends Fragment {
     private void queryCities() {
         titleTv.setText(selectedProvince.getProvinceName());
         backBtn.setVisibility(View.VISIBLE);
-        cities = DataSupport.where("provinceId=?", String.valueOf(selectedProvince.getId())).find(City.class);
+        cities = DataSupport.where("provinceid=?", String.valueOf(selectedProvince.getId())).find(City.class);
         if (cities.size() > 0) {
             data.clear();
             for (City city : cities) {
@@ -143,7 +151,7 @@ public class ChooseAreaFragment extends Fragment {
             currentLevel = LEVEL_CITY;
         } else {
             int provinceCode = selectedProvince.getProvinceCode();
-            String address = "http://guolin.tech/api/china/" + provinceCode;
+            String address = Net.CITY_BASE_URL + provinceCode;
             Log.d("cityAdd", address);
             queryFromServer(address, "city");
         }
@@ -155,7 +163,7 @@ public class ChooseAreaFragment extends Fragment {
     private void queryCounties() {
         titleTv.setText(selectedCity.getCityName());
         backBtn.setVisibility(View.VISIBLE);
-        counties = DataSupport.where("cityId=?", String.valueOf(selectedCity.getId())).find(County.class);
+        counties = DataSupport.where("cityid=?", String.valueOf(selectedCity.getId())).find(County.class);
         if (counties.size() > 0) {
             data.clear();
             for (County county : counties) {
@@ -167,7 +175,7 @@ public class ChooseAreaFragment extends Fragment {
         } else {
             int provinceCode = selectedProvince.getProvinceCode();
             int cityCode = selectedCity.getCityCode();
-            String address = "http://guolin.tech/api/china/" + provinceCode + "/" + cityCode;
+            String address = Net.CITY_BASE_URL + provinceCode + "/" + cityCode;
             Log.d("countyAdd", address);
             queryFromServer(address, "county");
         }
